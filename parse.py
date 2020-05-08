@@ -18,8 +18,11 @@ def get_category():
             theme_title = theme.text
             link = block.find('a', class_='themes_cat')
             link = link.attrs.get('href')
-            themes.update({theme_title : link.replace('/theme/', '')})
+            themes.update({theme_title: link.replace('/theme/', '')})
 
         return themes
+
     else:
         print("Возникла непредвиденная ошибка... Приносим искренние извинения!")
+
+
