@@ -19,14 +19,17 @@ def create_thematic_db():
 
     for name in names:
         cursor.execute(f"""CREATE TABLE IF NOT EXISTS {name}"""
-                       + """ (question text, prompts text, answer text)""")
+                       + """ (question text, prompts text, answer text, 
+                       UNIQUE (question, prompts, answer))""")
 
         with open(f'thematic/{name}.txt', 'r', encoding='utf-8') as f:
             data = f.readline()
             while data:
-                ins_data = tuple(data.split(';'))
-                cursor.execute(f"""INSERT INTO {name} VALUES {ins_data}""")
+                ins_data = tuple(i.strip() for i in data.split(';'))
+                cursor.execute(f"""INSERT OR IGNORE INTO {name} VALUES {ins_data}""")
                 data = f.readline()
+
+        db.commit()
 
 
 def create_difficult_db():
@@ -37,11 +40,18 @@ def create_difficult_db():
 
     for name in names:
         cursor.execute(f"""CREATE TABLE IF NOT EXISTS {name}"""
-                       + """ (question text, answer text)""")
+                       + """ (question text, answer text, UNIQUE (question, answer))""")
 
         with open(f'difficult/{name}.txt', 'r', encoding='utf-8') as f:
             data = f.readline()
             while data:
-                ins_data = tuple(data.split('*'))
-                cursor.execute(f"""INSERT INTO {name} VALUES {ins_data}""")
+                ins_data = tuple(i.strip() for i in data.split('*'))
+                cursor.execute(f"""INSERT OR IGNORE INTO {name} VALUES {ins_data}""")
                 data = f.readline()
+
+        db.commit()
+
+
+if __name__ == '__main__':
+    create_thematic_db()
+    create_difficult_db()
