@@ -24,9 +24,8 @@ def create_thematic_db():
         with open(f'thematic/{name}.txt', 'r', encoding='utf-8') as f:
             data = f.readline()
             while data:
-                question, prompts, answer = data.split(';')
-                cursor.execute(f"""INSERT INTO {name} VALUES """ +
-                               f"""({question}, {prompts}, {answer})""")
+                ins_data = tuple(data.split(';'))
+                cursor.execute(f"""INSERT INTO {name} VALUES {ins_data}""")
                 data = f.readline()
 
 
@@ -43,9 +42,6 @@ def create_difficult_db():
         with open(f'difficult/{name}.txt', 'r', encoding='utf-8') as f:
             data = f.readline()
             while data:
-                question, answer = data.split('*')
-                cursor.execute(f"""INSERT INTO {name} VALUES """ +
-                               f"""({question}, {answer})""")
+                ins_data = tuple(data.split('*'))
+                cursor.execute(f"""INSERT INTO {name} VALUES {ins_data}""")
                 data = f.readline()
-
-
