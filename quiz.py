@@ -43,18 +43,44 @@ def thematic_quiz():
         if user_answer == answer:
             good_attempts += 1
     print(f'Угадано {good_attempts} из {len(records)}. Время потрачено: {time.time() - start}')
+    db.close()
 
 
 def difficult_quiz():
-    pass
+    create_difficult_db()
+    db = sqlite3.connect('data_bases/difficult_quiz.db')
+    sql = db.cursor()
+
+    sql.execute(f"""SELECT name FROM sqlite_master WHERE type = 'table'""")
+    tables_name = sql.fetchall()
+    themes = []
+    for name in tables_name:
+        for elem in name:
+            themes.append(elem)
+
+    curr_theme = random.choice(themes)
+    sql.execute(f"""SELECT * FROM {curr_theme} ORDER BY RANDOM() LIMIT 15""")
+    records = sql.fetchall()
+    good_attempts = 0
+    start = time.time()
+    for record in records:
+        question, answer = record
+        question, answer = question.replace('\\xa0', ' '), answer.replace('\\xa0', ' ') # Исправить проблему с неразрывными пробелами
+        print(question)
+        user_answer = input('Введите ответ: ')
+        if user_answer == answer:
+            good_attempts += 1
+        print(f'Правильный ответ {answer}')
+    print(f'Угадано {good_attempts} из {len(records)}. Время потрачено: {time.time() - start}')
+    db.close()
 
 
-def quiz(thematic, difficult):
+def quiz(thematic=False, difficult=False):
     if thematic:
-        pass
+        thematic_quiz()
 
     if difficult:
-        pass
+        difficult_quiz()
 
 
-thematic_quiz()
+quiz(thematic=True)
