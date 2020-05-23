@@ -8,7 +8,9 @@ logging.basicConfig(level=logging.DEBUG)
 sessionStorage = {} # Хранилище данных о сессиях.
 
 
-@app.route("/", methods=['POST'])
+app.route("/", methods=['POST'])
+
+
 def main():
     # Функция получает тело запроса и возвращает ответ.
     logging.info('Request: %r', request.json)
@@ -56,7 +58,6 @@ def handle_dialog(req, res):
         req['request']['original_utterance']
     )
     res['response']['buttons'] = get_suggests(user_id)
-
 
 
 def get_suggests(user_id):
