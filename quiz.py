@@ -68,27 +68,28 @@ def difficult_quiz():
     db = sqlite3.connect('data_bases/difficult_quiz.db')
     sql = db.cursor()
     themes = get_themes('difficult')
-
     curr_theme = random.choice(themes)
+
     sql.execute(f"""SELECT * FROM {curr_theme} ORDER BY RANDOM() LIMIT 15""")
     records = sql.fetchall()
-    good_attempts = 0
-    start = time.time()
+
+    ##########################
+    # good_attempts = 0
+    # start = time.time()
+    ##########################
+
     for record in records:
         question, answer = record
         question, answer = question.replace('\\xa0', ' '), answer.replace('\\xa0', ' ') # Исправить проблему с неразрывными пробелами
-        print(question)
-        user_answer = input('Введите ответ: ')
-        if user_answer == answer:
-            good_attempts += 1
-        print(f'Правильный ответ {answer}')
-    print(f'Угадано {good_attempts} из {len(records)}. Время потрачено: {time.time() - start}')
+        yield question, answer
+
+    ##########################
+    #     print(question)
+    #     user_answer = input('Введите ответ: ')
+    #     if user_answer == answer:
+    #         good_attempts += 1
+    #     print(f'Правильный ответ {answer}')
+    # print(f'Угадано {good_attempts} из {len(records)}. Время потрачено: {time.time() - start}')
+    ##########################
+
     db.close()
-
-
-# def quiz(thematic=False, difficult=False):
-#     if thematic:
-#         thematic_quiz()
-#
-#     if difficult:
-#         difficult_quiz()
