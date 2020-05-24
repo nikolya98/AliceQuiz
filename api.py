@@ -2,17 +2,20 @@ from __future__ import unicode_literals
 import json
 import logging
 from flask import Flask, request
+from quiz import get_themes, thematic_quiz, difficult_quiz
+import time
+import random
+
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
-sessionStorage = {} # Хранилище данных о сессиях.
+sessionStorage = {}
 
 
 app.route("/", methods=['POST'])
 
 
 def main():
-    # Функция получает тело запроса и возвращает ответ.
     logging.info('Request: %r', request.json)
     response = {
         "version": request.json['version'],
@@ -31,52 +34,118 @@ def main():
 
 
 def handle_dialog(req, res):
-    # Функция для непосредственной обработки диалога.
+    # Новый пользователь: Инициализация, приветствие, предлагаем сыграть...
     user_id = req['session']['user_id']
-
     if req['session']['new']:
-        # Это новый пользователь.
-
         sessionStorage[user_id] = {
             'suggests': [
-                "..."
+                "Да",
+                "Нет",
             ]
         }
-
-        res['response']['text'] = 'Привет!'
+        res['response']['text'] = 'Привет! Сыграем?'
         res['response']['buttons'] = get_suggests(user_id)
         return
-
-    # Обрабатываем ответ пользователя.
+    # Пользователь согласился
     if req['request']['original_utterance'].lower() in [
-        '...'
+        'сыграем',
+        'да',
+        'ок',
+        'го',
     ]:
-        res['response']['text'] = '...'
-        return
+        # Играет, пока не надоест...
+        while True:
+            # Предлагаем выбор режима игры...
+            sessionStorage[user_id] = {
+                'suggests': [
+                    "Викторина по темам",
+                    "Режим Всезнайка"
+                ]
+            }
+            res['response']['text'] = 'Выберите режим игры.'
+            res['response']['buttons'] = get_suggests(user_id)
+            yield
 
-    res['response']['text'] = '...' % (
-        req['request']['original_utterance']
-    )
-    res['response']['buttons'] = get_suggests(user_id)
+            # Пользоватеь выбрал тематическую викторину
+            if req['request']['original_utterance'].lower() in [
+                'виторина по темам',
+                'тематическая'
+            ]:
+                themes = get_themes('thematic')
+                sessionStorage[user_id] = {
+                    'suggests': themes
+                }
+                # Пользователь должен корректно ввести тему викторины...
+                while True:
+                    res['response']['text'] = 'Выберите тему'
+                    res['response']['buttons'] = get_suggests(user_id)
+                    yield
+
+                    if req['request']['original_utterance'].lower() not in [i.lower() for i in themes]:
+                        res['response']['text'] = 'Нет такой темы, попробуйте ещё раз!'
+                        continue
+                    else:
+                        chosen_theme = req['request']['original_utterance'].capitalize()
+                        break
+                # Счётчики верных ответов и времени игры...
+                good_attempts = 0
+                start = time.time()
+                # На каждой итерации получаем кортеж (Вопрос, [Список вариантов ответа], Правильный ответ)
+                for i in thematic_quiz(chosen_theme):
+                    question, prompts, answer = i
+                    prompts = random.shuffle(prompts)
+                    res['response']['text'] = question
+                    sessionStorage[user_id] = {
+                        'suggests': prompts
+                    }
+                    res['response']['buttons'] = get_suggests(user_id)
+                    if req['request']['original_utterance'].lower() == answer.lower():
+                        good_attempts += 1
+
+            # Пользователь выбрал режим "Всезнайка"...
+            if req['request']['original_utterance'].lower() == 'всезнайка':
+                res['response']['text'] = 'Итак, поехали!'
+                good_attempts = 0
+                start = time.time()
+                for i in difficult_quiz():
+                    question, answer = i
+                    res['response']['text'] = question
+                    if req['request']['original_utterance'].lower() == answer.lower():
+                        good_attempts += 1
+                    elif req['request']['original_utterance'].lower() in answer.lower():
+                        good_attempts += 1
+                    res['response']['text'] = f'Правильный ответ: {answer}'
+
+            # Выводим результаты игры и предлагаем сыграть ещё раз
+            spend_time = time.time() - start
+            res['response']['text'] = f'Ответов угадано: {good_attempts}'
+            res['response']['text'] = f'Времени потрачено: {spend_time}'
+            res['response']['text'] = 'Сыграем ещё раз?'
+            if req['request']['original_utterance'].lower() in [
+                'да',
+                'сыграем',
+                'ещё раз'
+            ]:
+                continue
+            if req['request']['original_utterance'].lower() in [
+                'нет',
+                'отстань',
+                'мне пора',
+                'не хочу'
+            ]:
+                break
+
+    # Пользователь отказался...
+    else:
+        res['response']['text'] = 'Всего хорошего!'
+        return
 
 
 def get_suggests(user_id):
-    # Функция возвращает подсказки для ответа.
     session = sessionStorage[user_id]
 
     suggests = [
         {'title': suggest, 'hide': True}
-        for suggest in session['suggests'][:2]
+        for suggest in session['suggests_start']
     ]
-
-    session['suggests'] = session['suggests'][1:]
-    sessionStorage[user_id] = session
-
-    if len(suggests) < 2:
-        suggests.append({
-            "title": "Ладно",
-            "url": "https://market.yandex.ru/search?text=слон",
-            "hide": True
-        })
-
     return suggests
