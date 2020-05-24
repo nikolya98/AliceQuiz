@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 sessionStorage = {}
 
 
-@app.route("/", methods=['POST'])
+@app.route("/", methods=['POST', 'GET'])
 
 
 def main():
