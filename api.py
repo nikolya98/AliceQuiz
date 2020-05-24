@@ -103,7 +103,7 @@ def handle_dialog(req, res):
                         good_attempts += 1
 
             # Пользователь выбрал режим "Всезнайка"...
-            if req['request']['original_utterance'].lower() == 'всезнайка':
+            elif req['request']['original_utterance'].lower() == 'всезнайка':
                 res['response']['text'] = 'Итак, поехали!'
                 good_attempts = 0
                 start = time.time()
@@ -116,6 +116,10 @@ def handle_dialog(req, res):
                         good_attempts += 1
                     res['response']['text'] = f'Правильный ответ: {answer}'
 
+            else:
+                res['response']['text'] = 'Некорректный ввод... Попробуйте ещё раз!'
+                continue
+                
             # Выводим результаты игры и предлагаем сыграть ещё раз
             spend_time = time.time() - start
             res['response']['text'] = f'Ответов угадано: {good_attempts}'
