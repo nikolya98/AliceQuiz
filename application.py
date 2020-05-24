@@ -94,7 +94,7 @@ def handle_dialog(req, res):
                 for i in thematic_quiz(chosen_theme):
                     question, prompts, answer = i
                     prompts = random.shuffle(prompts)
-                    res['response']['text'] = question
+                    res['response']['text'] = f'{question}'
                     sessionStorage[user_id] = {
                         'suggests': prompts
                     }
@@ -109,7 +109,7 @@ def handle_dialog(req, res):
                 start = time.time()
                 for i in difficult_quiz():
                     question, answer = i
-                    res['response']['text'] = question
+                    res['response']['text'] = f'{question}'
                     if req['request']['original_utterance'].lower() == answer.lower():
                         good_attempts += 1
                     elif req['request']['original_utterance'].lower() in answer.lower():
